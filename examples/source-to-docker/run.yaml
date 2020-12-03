@@ -1,0 +1,49 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: k8s-udp-load-balancing-git
+  namespace: ci
+spec:
+  type: git
+  params:
+    - name: revision
+      value: master
+    - name: url
+      value: https://github.com/tom1299/k8s-udp-load-balancing.git
+    - name: revision
+      value: master
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: k8s-udp-load-balancing-udp-server
+  namespace: ci
+spec:
+  type: image
+  params:
+    - name: url
+      value: ghcr.io/tom1299/k8s-udp-load-balancing/udp-server
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: source-to-docker
+  namespace: ci
+spec:
+  serviceAccountName: build-bot
+  pipelineRef:
+    name: source-to-docker
+  resources:
+  - name: git-source
+    resourceRef:
+      name: k8s-udp-load-balancing-git
+  - name: builtImage
+    resourceRef:
+      name: k8s-udp-load-balancing-udp-server
+  params:
+  - name: pathToDockerFile
+    value: /k8s-udp-server/Dockerfile
+  - name: pathToContext
+    value: /k8s-udp-server
+  

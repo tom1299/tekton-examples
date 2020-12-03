@@ -1,0 +1,13 @@
+apiVersion: settings.k8s.io/v1alpha1
+kind: PodPreset
+metadata:
+  name: http-proxy
+  namespace: tekton-pipelines
+spec:
+  env:
+    - name: http_proxy
+      value: "${http_proxy}"
+    - name: https_proxy
+      value: "${https_proxy}"
+    - name: no_proxy
+      value: "${no_proxy}"

@@ -1,0 +1,108 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: get-tag-and-sha
+  namespace: ci
+spec:
+  resources:
+    inputs:
+      - name: git-source
+        type: git
+  steps:
+    - name: get-tag-and-sha
+      image: alpine/git
+      script: |
+        cd git-source
+        git fetch --unshallow
+        git describe --always --tags | tr -d '\040\011\012\015' > $(results.tag.path)
+        git rev-parse --short HEAD | tr -d '\040\011\012\015' > $(results.short-sha.path) 
+  results:
+    - name: tag
+    - name: short-sha
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: source-to-docker
+  namespace: ci
+spec:
+  params:
+    - name: pathToDockerFile
+      type: string
+      default: $(resources.inputs.git-source.path)/Dockerfile
+    - name: pathToContext
+      type: string
+      default: $(resources.inputs.git-source.path)
+    - name: tag
+      type: string
+      default: latest
+    - name: short-sha
+      type: string
+  resources:
+    inputs:
+      - name: git-source
+        type: git
+    outputs:
+      - name: builtImage
+        type: image
+  steps:
+    - name: build
+      image: gcr.io/kaniko-project/executor:v0.16.0
+      env:
+        - name: "DOCKER_CONFIG"
+          value: "/tekton/home/.docker/"
+      command:
+        - /kaniko/executor
+      args:
+        - --dockerfile=$(params.pathToDockerFile)
+        - --destination=$(resources.outputs.builtImage.url):$(params.tag)
+        - --destination=$(resources.outputs.builtImage.url):$(params.short-sha)
+        - --context=$(params.pathToContext)
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: source-to-docker
+  namespace: ci
+spec:
+  resources:
+    - name: git-source
+      type: git
+    - name: builtImage
+      type: image
+  params:
+    - name: pathToDockerFile
+      type: string
+      default: Dockerfile
+    - name: pathToContext
+      type: string
+  tasks:
+    - name: get-tag-and-sha
+      taskRef:
+        name: get-tag-and-sha
+      resources:
+        inputs:
+          - name: git-source
+            resource: git-source
+    - name: source-to-docker
+      taskRef:
+        name: source-to-docker
+      runAfter:
+        - get-tag-and-sha
+      resources:
+        inputs:
+          - name: git-source
+            resource: git-source
+        outputs:
+          - name: builtImage
+            resource: builtImage
+      params:
+        - name: tag
+          value: "$(tasks.get-tag-and-sha.results.tag)"
+        - name: short-sha
+          value: "$(tasks.get-tag-and-sha.results.short-sha)"
+        - name: pathToDockerFile
+          value: $(resources.inputs.git-source.path)$(params.pathToDockerFile)
+        - name: pathToContext
+          value: $(resources.inputs.git-source.path)$(params.pathToContext)
