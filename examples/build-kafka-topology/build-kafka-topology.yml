@@ -1,0 +1,75 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-kafka-topology
+  namespace: ci
+spec:
+  resources:
+    inputs:
+      - name: git-source
+        type: git
+  params:
+    - name: kafka-bootstrap-host
+      type: string
+      default: kafka-bootstrap
+    - name: kafka-bootstrap-port
+      type: string
+      default: "9092"
+    - name: topology-file
+      type: string
+      default: topology.yaml
+    - name: topology-builder-properties-file
+      type: string
+      default: topology-builder.properties
+  steps:
+    - name: build-kafka-topology
+      image: purbon/kafka-topology-builder:1.0.0-rc.2
+      script: |
+        cd git-source
+        export BOOTSTRAP_SERVERS=$(params.kafka-bootstrap-host):$(params.kafka-bootstrap-port)
+        echo $BOOTSTRAP_SERVERS
+        sed -i 's/${BOOTSTRAP_SERVERS}/'$BOOTSTRAP_SERVERS'/g' $(params.topology-builder-properties-file)
+        cat $(params.topology-builder-properties-file)
+        kafka-topology-builder.sh \
+          --clientConfig $(params.topology-builder-properties-file) \
+          --topology $(params.topology-file) \
+          --allowDelete
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: build-kafka-topology
+  namespace: ci
+spec:
+  resources:
+    - name: git-source
+      type: git
+  params:
+    - name: kafka-bootstrap-host
+      type: string
+      default: kafka-bootstrap
+    - name: kafka-bootstrap-port
+      type: string
+      default: "9092"
+    - name: topology-file
+      type: string
+    - name: topology-builder-properties-file
+      type: string
+  tasks:
+    - name: build-kafka-topology
+      taskRef:
+        name: build-kafka-topology
+      resources:
+        inputs:
+          - name: git-source
+            resource: git-source
+      params:
+        - name: topology-file
+          value: "$(params.topology-file)"
+        - name: topology-builder-properties-file
+          value: "$(params.topology-builder-properties-file)"
+        - name: kafka-bootstrap-host
+          value: "$(params.kafka-bootstrap-host)"
+        - name: kafka-bootstrap-port
+          value: "$(params.kafka-bootstrap-port)"

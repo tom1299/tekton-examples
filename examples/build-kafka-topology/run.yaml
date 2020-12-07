@@ -1,0 +1,33 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: kafka-examples-git
+  namespace: ci
+spec:
+  type: git
+  params:
+    - name: url
+      value: https://github.com/tom1299/kafka-examples.git
+    - name: revision
+      value: main
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: build-kafka-topology
+  namespace: ci
+spec:
+  serviceAccountName: build-bot
+  pipelineRef:
+    name: build-kafka-topology
+  resources:
+  - name: git-source
+    resourceRef:
+      name: kafka-examples-git
+  params:
+  - name: topology-file
+    value: topology-builder/simple-example/topology.yaml
+  - name: topology-builder-properties-file
+    value: topology-builder/simple-example/topology-builder.properties
+  

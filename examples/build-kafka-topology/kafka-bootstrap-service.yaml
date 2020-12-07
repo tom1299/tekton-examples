@@ -1,0 +1,10 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: kafka-bootstrap
+  namespace: ci
+spec:
+  type: ExternalName
+  externalName: my-cluster-kafka-bootstrap.kafka.svc.cluster.local
+  ports:
+  - port: 9092
