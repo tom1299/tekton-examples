@@ -1,0 +1,184 @@
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: privileged
+spec:
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - '*'
+  fsGroup:
+    rule: RunAsAny
+  hostIPC: true
+  hostNetwork: true
+  hostPID: true
+  hostPorts:
+  - max: 65535
+    min: 0
+  privileged: true
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: usepsp
+rules:
+- apiGroups:
+  - policy
+  resourceNames:
+  - privileged
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: usepsp
+roleRef:
+  kind: ClusterRole
+  name: usepsp
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: system:kube-controller-manager
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: system:kube-scheduler
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: system:kube-proxy
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: system:kube-scheduler
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:masters
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:bootstrappers:kubeadm:default-node-token
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:bootstrappers:kubeadm:default-node-token
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:bootstrappers:kubeadm:default-node-token
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:nodes
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:authenticated
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:authenticated
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:authenticated
+- kind: ServiceAccount
+  name: kindnet
+  namespace: kube-system
+- kind: ServiceAccount
+  name: kube-proxy
+  namespace: kube-system
+- kind: ServiceAccount
+  name: local-path-provisioner-service-account
+  namespace: local-path-storage
+- kind: ServiceAccount
+  name: attachdetach-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: certificate-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: clusterrole-aggregation-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: cronjob-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: daemon-set-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: deployment-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: disruption-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: endpoint-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: endpointslice-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: endpointslicemirroring-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: expand-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: generic-garbage-collector
+  namespace: kube-system
+- kind: ServiceAccount
+  name: horizontal-pod-autoscaler
+  namespace: kube-system
+- kind: ServiceAccount
+  name: job-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: namespace-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: node-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: persistent-volume-binder
+  namespace: kube-system
+- kind: ServiceAccount
+  name: pod-garbage-collector
+  namespace: kube-system
+- kind: ServiceAccount
+  name: pv-protection-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: pvc-protection-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: replicaset-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: replication-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: resourcequota-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: route-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: service-account-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: service-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: statefulset-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: ttl-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: coredns
+  namespace: kube-system
+- kind: ServiceAccount
+  name: kube-dns
+  namespace: kube-system
